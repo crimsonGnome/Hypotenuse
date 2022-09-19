@@ -1,0 +1,269 @@
+     1                                  ;****************************************************************************************************************************
+     2                                  ; Program name: "Hypotenuse". This program takes in two float numbers as inputs to determine the hypotenuse in which the two
+     3                                  ; lines forms. It will then return the hypotenuse of the new triangele.
+     4                                  ; use Copyright (C) 2022 Joseph Eggers.
+     5                                  ;                                                                                                                           *
+     6                                  ;This file is part of the software program "Hypotenuse".                                                              *
+     7                                  ; Hypotenuse is free software: you can redistribute it and/or modify it under the terms of the GNU General Public      *
+     8                                  ;License version 3 as published by the Free Software Foundation.                                                            *
+     9                                  ; Hypotenuse is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied     *
+    10                                  ;warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.     *
+    11                                  ;A copy of the GNU General Public License v3 is available here:  <https:;www.gnu.org/licenses/>.                            *
+    12                                  ;****************************************************************************************************************************
+    13                                  
+    14                                  ;=======1=========2=========3=========4=========5=========6=========7=========8=========9=========0=========1=========2=========3**
+    15                                  ;Author information
+    16                                  ;  Author name: Joseph Eggers
+    17                                  ;  Author email: joseph.eggers@csu.fullerton.edu
+    18                                  ;  Author CWID: 885939488
+    19                                  ;
+    20                                  ;Contributors 
+    21                                  ;  Consutlation was provided by the programmer sapphireGnome (Destiny Bonillas) for terminology, and Flow Control
+    22                                  ;
+    23                                  ;Status
+    24                                  ;  This software is not an application program, but rather it is a single function licensed for use by other applications.
+    25                                  ;  This function can be embedded within both FOSS programs and in proprietary programs as permitted by the LGPL.
+    26                                  
+    27                                  ;Function information
+    28                                  ;  Function name: Hypotenuse
+    29                                  ;  Programming language: X86 assembly in Intel syntax.
+    30                                  ;  Date development began:  2022-Oct-17
+    31                                  ;  Date version 1.0 finished: 2022-Oct-17
+    32                                  ;  System requirements: an X86 platform with nasm installed o other compatible assembler.
+    33                                  ;  Know issues: <now in testing phase>
+    34                                  ;  Assembler used for testing: Nasm version 2.14.02
+    35                                  ;
+    36                                  ;Purpose
+    37                                  ;  This function wil accept two floats and return the largest number
+    38                                  ;  float number or not converted to a float number.
+    39                                  ;
+    40                                  ;Translation information
+    41                                  ;  Assemble: nasm -f elf64 -l isfloat.lis -o isfloat.o isfloat.asm
+    42                                  ;
+    43                                  ;Software design document:
+    44                                  ;  An Execution flow chart accompanies this function.  That document will provide a better understanding of the 
+    45                                  ;  algorithm used in the isfloat function than a direct reading of the source code of the function.
+    46                                  
+    47                                  ;========= Begin source code ====================================================================================
+    48                                  extern printf
+    49                                  extern scanf
+    50                                  extern fgets
+    51                                  extern stdin
+    52                                  extern strlen
+    53                                  INPUT_LEN equ 256 ; Max bytes of name, title, response
+    54                                  LARGE_BOUNDARY equ 64
+    55                                  SMALL_BOUNDARY equ 16
+    56                                  
+    57                                  global pythagoras
+    58                                  
+    59                                  segment .data
+    60                                  align SMALL_BOUNDARY
+    61                                  ; Output messages used for the program. 
+    62 00000000 506C6561736520656E-     nameInput db "Please enter your last name: ",0
+    62 00000009 74657220796F757220-
+    62 00000012 6C617374206E616D65-
+    62 0000001B 3A2000             
+    63 0000001E 506C6561736520656E-     titleInput db "Please enter your title (Mr, Ms, Nurse, Engineer, etc): ",0
+    63 00000027 74657220796F757220-
+    63 00000030 7469746C6520284D72-
+    63 00000039 2C204D732C204E7572-
+    63 00000042 73652C20456E67696E-
+    63 0000004B 6565722C2065746329-
+    63 00000054 3A2000             
+    64 00000057 506C6561736520656E-     initiate db "Please enter the sides of your triangle seperated by ws: ", 0
+    64 00000060 746572207468652073-
+    64 00000069 69646573206F662079-
+    64 00000072 6F757220747269616E-
+    64 0000007B 676C65207365706572-
+    64 00000084 617465642062792077-
+    64 0000008D 733A2000           
+    65 00000091 546865206C656E6774-     calculation db `The length of the hypotenuse is %1.16f units`, 10, 0 
+    65 0000009A 68206F662074686520-
+    65 000000A3 6879706F74656E7573-
+    65 000000AC 652069732025312E31-
+    65 000000B5 366620756E6974730A-
+    65 000000BE 00                 
+    66 000000BF 546865736520617265-     confirmationNumbers db `These are the numbers were entered \n %1.16lf \n %1.16lf`,10,0
+    66 000000C8 20746865206E756D62-
+    66 000000D1 657273207765726520-
+    66 000000DA 656E7465726564200A-
+    66 000000E3 2025312E31366C6620-
+    66 000000EC 0A2025312E31366C66-
+    66 000000F5 0A00               
+    67 000000F7 506C6561736520656E-     endingMSG db `Please enjoy your triangle %s %s`, 10, 0
+    67 00000100 6A6F7920796F757220-
+    67 00000109 747269616E676C6520-
+    67 00000112 25732025730A00     
+    68                                  ; Inut messages received by the user
+    69 00000119 256C6620256C6600        floatFormat db "%lf %lf", 0
+    70 00000121 257300                  format: db "%s", 0 ;
+    71 00000124 90<rept>                align LARGE_BOUNDARY
+    72                                  segment .bss
+    73                                  ; Reserve 256 bytes for each
+    74 00000000 <res 00000100>            title: resb INPUT_LEN
+    75 00000100 <res 00000100>            name: resb INPUT_LEN
+    76 00000200 <res 00000100>            response: resb INPUT_LEN
+    77                                  
+    78                                  segment .text
+    79                                  
+    80                                  pythagoras:
+    81                                  ;Prolog ===== Insurance for any caller of this assembly module ========================================================
+    82                                  ;Any future program calling this module that the data in the caller's GPRs will not be modified.
+    83 00000000 55                      push rbp
+    84 00000001 4889E5                  mov  rbp,rsp
+    85 00000004 57                      push rdi                                                    ;Backup rdi
+    86 00000005 56                      push rsi                                                    ;Backup rsi
+    87 00000006 52                      push rdx                                                    ;Backup rdx
+    88 00000007 51                      push rcx                                                    ;Backup rcx
+    89 00000008 4150                    push r8                                                     ;Backup r8
+    90 0000000A 4151                    push r9                                                     ;Backup r9
+    91 0000000C 4152                    push r10                                                    ;Backup r10
+    92 0000000E 4153                    push r11                                                    ;Backup r11
+    93 00000010 4154                    push r12                                                    ;Backup r12
+    94 00000012 4155                    push r13                                                    ;Backup r13
+    95 00000014 4156                    push r14                                                    ;Backup r14
+    96 00000016 4157                    push r15                                                    ;Backup r15
+    97 00000018 53                      push rbx                                                    ;Backup rbx
+    98 00000019 9C                      pushf                                                       ;Backup rflags
+    99                                  
+   100                                  ;Registers rax, rip, and rsp are usually not backed up.
+   101 0000001A 6A00                    push qword 0
+   102                                  ;====== Intiate progam ======================================================================
+   103                                  ;============================================================================================
+   104                                  ;
+   105                                  ;====== ***** Name Section *****  =====================================
+   106                                  ;====== Print the last name Enter Message ================
+   107                                  ;
+   108                                  
+   109 0000001C B800000000              mov rax, 0				; 0 floats being passed into funcion
+   110 00000021 48BF-                   mov rdi, format			; the format the we are expexcting, which is a string
+   110 00000023 [2101000000000000] 
+   111 0000002B 48BE-                   mov rsi, nameInput			; output message - Please enter your name 
+   111 0000002D [0000000000000000] 
+   112 00000035 E8(00000000)            call printf				; call printf function 
+   113                                  
+   114                                  
+   115                                  ;====== Enter the last name ================
+   116                                  
+   117 0000003A B800000000              mov rax, 0				; 0 floats being passed into funcion
+   118 0000003F 48BF-                   mov rdi, name			; moving name 
+   118 00000041 [0001000000000000] 
+   119 00000049 BE00010000              mov rsi, INPUT_LEN 		; read 256 bytes
+   120 0000004E 488B1425[00000000]      mov rdx, [stdin]		;de referenced file strem
+   121                                  
+   122                                  ; Call the external function fgets
+   123 00000056 E8(00000000)            call fgets
+   124                                  
+   125                                  ; Remove newline char from fgets input
+   126 0000005B B800000000              mov rax, 0 ; Indicate 0 floating point arguments
+   127 00000060 48BF-                   mov rdi, name ; Move name into the first argument register
+   127 00000062 [0001000000000000] 
+   128 0000006A E8(00000000)            call strlen ; Call external function strlen, which returns the length of the string leading up to '\0'
+   129                                  
+   130 0000006F 4883E801                sub rax, 1 ; The length is stored in rax. Here we subtract 1 from rax to obtain the location of '\n'
+   131 00000073 C680[00010000]00        mov byte [name + rax], 0 ; Replace the byte where '\n' exits with '\0'
+   132                                  
+   133                                  ;
+   134                                  ;====== ***** Title Section *****  ===================================
+   135                                  ;====== Enter you tilte Section ================
+   136                                  ;
+   137 0000007A B800000000              mov rax, 0 ; Indicate 0 floating point arguments
+   138 0000007F 48BF-                   mov rdi, format ; Move string format argument into register rdi
+   138 00000081 [2101000000000000] 
+   139 00000089 48BE-                   mov rsi, titleInput ; Move message2 into second argument register rsi
+   139 0000008B [1E00000000000000] 
+   140 00000093 E8(00000000)            call printf ; Call external function printf
+   141                                  
+   142                                  ;===== Enter Title Input ==================
+   143                                  
+   144 00000098 B800000000              mov rax, 0 ; Indicate we have no floating point arguments to pass to external function
+   145 0000009D 48BF-                   mov rdi, title ; Move first argument into argument register rdi
+   145 0000009F [0000000000000000] 
+   146 000000A7 BE00010000              mov rsi, INPUT_LEN ; Provide fgets with the second argument, the size of the bytes reserved, then move it into second argument register rsi
+   147 000000AC 488B1425[00000000]      mov rdx, [stdin] ; Move the contents at address of stdin, i.e. dereference, into 3rd argument register
+   148 000000B4 E8(00000000)            call fgets ; Call the external function fgets
+   149                                  
+   150 000000B9 B800000000              mov rax, 0 ; Indicate 0 floating point arguments
+   151 000000BE 48BF-                   mov rdi, title ; Move title into the first argument register
+   151 000000C0 [0000000000000000] 
+   152 000000C8 E8(00000000)            call strlen ; Call external function strlen, which returns the length of the string leading up to '\0'
+   153 000000CD 4883E801                sub rax, 1 ; The length is stored in rax. Here we subtract 1 from rax to obtain the location of '\n'
+   155 000000D1 C680[00000000]00        mov byte [title + rax], 0 ; Replace the byte where '\n' exits with '\0'
+   156                                  ;====== ***** Traingle Section *****  ===================================
+   157                                  ;====== Print Traingle Enter Message ================
+   158                                  ;
+   159 000000D8 6A00                    push qword 0
+   160 000000DA B800000000              mov rax, 0			; 0 floats being passed into funcion	; the format the we are expexcting, which is a string
+   161 000000DF 48BF-                   mov rdi, initiate			; the format the we are expexcting, which is a string
+   161 000000E1 [5700000000000000] 
+   162 000000E9 E8(00000000)            call printf				; call printf function 
+   163 000000EE 58                      pop rax
+   164                                  ;==== Scanf Traingle Section ===== 
+   165                                  
+   166 000000EF 6A00                    push qword 0
+   167 000000F1 6A00                    push qword 0
+   168 000000F3 6A00                    push qword 0
+   169 000000F5 B800000000              mov rax, 0 
+   170 000000FA 48BF-                   mov rdi, floatFormat
+   170 000000FC [1901000000000000] 
+   171 00000104 4889E6                  mov rsi, rsp
+   172 00000107 4889E2                  mov rdx, rsp
+   173 0000010A 4883C208                add rdx, 8
+   174 0000010E E8(00000000)            call scanf
+   175                                  ; move float to register
+   176 00000113 F2440F103C24            movsd xmm15, [rsp]
+   177 00000119 F2440F10742408          movsd xmm14, [rsp+8]
+   178                                  
+   179 00000120 58                      pop rax
+   180 00000121 58                      pop rax
+   181 00000122 58                      pop rax
+   182                                  ;==== Calculation Section ===== 
+   183                                  
+   184 00000123 F2450F59FF              mulsd xmm15, xmm15
+   185 00000128 F2450F59F6              mulsd xmm14, xmm14
+   186 0000012D F2450F58FE              addsd xmm15, xmm14
+   187 00000132 F2450F51EF              sqrtsd xmm13, xmm15
+   188                                  ;==== OutPut Section ===== 
+   189                                  ;==== OutPut Hypotenuse ===== 
+   190 00000137 6A00                    push qword 0
+   191                                  ; Display the iniate input messages
+   192 00000139 B801000000              mov rax, 1                  		; printf uses two flloats for the xmm registers
+   193 0000013E 48BF-                   mov rdi, calculation		;"These are the numbers were entered \n %1.16f \n %1.16f"
+   193 00000140 [9100000000000000] 
+   194 00000148 F2410F10C5              movsd xmm0, xmm13
+   195 0000014D E8(00000000)            call printf
+   196 00000152 58                      pop rax
+   197                                  ;==== OutPut Title Name ===== 
+   198 00000153 6A00                    push qword 0
+   199                                  ; Display the iniate input messages
+   200 00000155 B801000000              mov rax, 1                  		; printf uses two flloats for the xmm registers
+   201 0000015A 48BF-                   mov rdi, endingMSG		;"These are the numbers were entered \n %1.16f \n %1.16f"
+   201 0000015C [F700000000000000] 
+   202 00000164 48BE-                   mov rsi, title
+   202 00000166 [0000000000000000] 
+   203 0000016E 48BA-                   mov rdx, name
+   203 00000170 [0001000000000000] 
+   204 00000178 E8(00000000)            call printf
+   205 0000017D 58                      pop rax
+   206                                  ;==== Return Hypotenuse  ===== 
+   207 0000017E F2410F10C5              movsd xmm0, xmm13
+   208 00000183 58                      pop rax
+   209                                  
+   210                                  ;===== Restore original values to integer registers ===================================================================
+   211 00000184 9D                      popf                                                        ;Restore rflags
+   212 00000185 5B                      pop rbx                                                     ;Restore rbx
+   213 00000186 415F                    pop r15                                                     ;Restore r15
+   214 00000188 415E                    pop r14                                                     ;Restore r14
+   215 0000018A 415D                    pop r13                                                     ;Restore r13
+   216 0000018C 415C                    pop r12                                                     ;Restore r12
+   217 0000018E 415B                    pop r11                                                     ;Restore r11
+   218 00000190 415A                    pop r10                                                     ;Restore r10
+   219 00000192 4159                    pop r9                                                      ;Restore r9
+   220 00000194 4158                    pop r8                                                      ;Restore r8
+   221 00000196 59                      pop rcx                                                     ;Restore rcx
+   222 00000197 5A                      pop rdx                                                     ;Restore rdx
+   223 00000198 5E                      pop rsi                                                     ;Restore rsi
+   224 00000199 5F                      pop rdi                                                     ;Restore rdi
+   225 0000019A 5D                      pop rbp                                                     ;Restore rbp
+   226                                  
+   227 0000019B C3                      ret
